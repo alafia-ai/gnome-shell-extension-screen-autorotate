@@ -70,16 +70,52 @@ export function get_state() {
 }
 
 export function rotate_to(transform) {
-  this.get_state().then(state => {
-    let target_monitor = state.builtin_monitor;
-    if (target_monitor === undefined) {
-      target_monitor = state.monitors[0]
-    }
-    let logical_monitor = state.get_logical_monitor_for(target_monitor.connector);
-    logical_monitor.transform = transform;
-    let variant = state.pack_to_apply(this.Methods['temporary']);
-    call_dbus_method('ApplyMonitorsConfig', null, variant);
-  }).catch(err => {
-    console.error(err);
-  })
+  this.get_state()
+    .then(state => {
+      let target_monitor = state.builtin_monitor;
+
+      // If no built-in monitor is found, pick the first available monitor
+      if (!target_monitor) {
+        console.warn("Built-in monitor not found. Searching for available monitors...");
+        target_monitor = state.monitors.find(monitor => monitor.connector !== undefined);
+      }
+
+      if (!target_monitor) {
+        console.error("No valid monitors found!");
+        return;
+      }
+
+      console.log("Using monitor:", target_monitor.connector);
+
+      let logical_monitor = state.get_logical_monitor_for(target_monitor.connector);
+
+      // If logical monitor is not found, try the next available monitor
+      if (!logical_monitor) {
+        console.warn("Logical monitor not found for connector:", target_monitor.connector);
+
+        // Try the next monitor with a valid connector
+        for (let monitor of state.monitors) {
+          logical_monitor = state.get_logical_monitor_for(monitor.connector);
+          if (logical_monitor) {
+            console.log("Switching to next available logical monitor:", monitor.connector);
+            target_monitor = monitor;
+            break;
+          }
+        }
+      }
+
+      // Final check if we found a valid logical monitor
+      if (!logical_monitor) {
+        console.error("No valid logical monitors found after searching all available monitors!");
+        return;
+      }
+
+      // Apply transformation
+      logical_monitor.transform = transform;
+      let variant = state.pack_to_apply(this.Methods['temporary']);
+      call_dbus_method('ApplyMonitorsConfig', null, variant);
+    })
+    .catch(err => {
+      console.error("Error fetching monitor state:", err);
+    });
 }
