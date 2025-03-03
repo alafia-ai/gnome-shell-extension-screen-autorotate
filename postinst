@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# install for every user
+for u in /root /home/*
+do
+    n="`basename ${u}`"
+    if ! getent passwd "$n" >/dev/null
+    then
+        # not a real user, ignore
+        continue
+    fi
+
+    echo ${u}
+
+    mkdir -p "${u}/.local/share/gnome-shell/extensions"
+    cp -r /etc/screen-rotate@shyzus.github.io "${u}/.local/share/gnome-shell/extensions"
+
+done
+
+echo "Extension has been installed to $EXTENSION_DIR. Please reload GNOME Shell to activate it. "
+echo "Reloading GNOME Shell can be done by logging out and logging back in."
+
+exit 0

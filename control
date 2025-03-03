@@ -1,0 +1,8 @@
+Package: gnome-shell-extsnsion-screen-autorotate
+Version: 1.0-1
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Isaac isaac@alafia.ai
+Depends: gnome-shell-extension-manager
+Description: Screen autoroation GNOME Shell extension
